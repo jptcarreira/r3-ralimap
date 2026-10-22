@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RaliMap - Track Viewer</title>
+
+  <link href="https://cdn.maptiler.com/maptiler-sdk-js/latest/maptiler-sdk.css" rel="stylesheet" />
+  <link href="styles.css?v=11" rel="stylesheet" />
+</head>
+<body>
+
+  <header>
+    <h1>RaliMap</h1>
+    <span class="badge">Track Viewer</span>
+    <span id="track-name">Drop a .rn2 or .rbc file to load a track</span>
+    <div id="stage-selector-wrap" class="stage-selector-wrap" hidden>
+      <label for="stage-selector">Stage</label>
+      <select id="stage-selector" type="button"></select>
+    </div>
+    <div id="track-width-wrap" class="track-width-wrap">
+      <label for="track-width-selector">Width</label>
+      <select id="track-width-selector" type="button">
+        <option value="0.5">Thin</option>
+        <option value="1" selected>Normal</option>
+        <option value="1.35">Thick</option>
+      </select>
+    </div>
+    <div class="track-width-wrap">
+      <label for="icon-size-selector">Icons</label>
+      <select id="icon-size-selector" type="button">
+        <option value="28">Tiny</option>
+        <option value="40" selected>Small</option>
+        <option value="56">Normal</option>
+      </select>
+    </div>
+    <div class="connection-mode-wrap">
+      <label for="connection-mode-selector">Links</label>
+      <select id="connection-mode-selector" type="button">
+        <option value="normal" selected>Normal</option>
+        <option value="all">All links</option>
+        <option value="tc-dss">TC-DSS</option>
+        <option value="dss-ass-stop">DSS-ASS+STOP</option>
+        <option value="ass-stop">ASS-STOP</option>
+      </select>
+    </div>
+    <div id="arrow-controls-wrap" class="arrow-controls-wrap">
+      <label class="arrow-toggle-label" for="arrow-toggle">
+        <input id="arrow-toggle" type="checkbox" checked />
+        Arrows
+      </label>
+      <label for="arrow-spacing">Spacing</label>
+      <input id="arrow-spacing" type="range" min="30" max="220" step="10" value="50" />
+      <span id="arrow-spacing-value">50</span>
+    </div>
+  </header>
+
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+    <!-- Style picker -->
+    <button id="style-picker-btn" type="button" title="Change map style">
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+      </svg>
+    </button>
+    <div id="style-panel">
+      <div class="style-opt" data-style="OUTDOOR"><div class="style-swatch" style="background:linear-gradient(135deg,#4a7a4a,#7aab6a)"></div><span>Outdoor</span></div>
+      <div class="style-opt" data-style="STREETS"><div class="style-swatch" style="background:linear-gradient(135deg,#c8d4e0,#e8edf2)"></div><span>Streets</span></div>
+      <div class="style-opt" data-style="SATELLITE"><div class="style-swatch" style="background:linear-gradient(135deg,#1a2a14,#2a4020)"></div><span>Satellite</span></div>
+      <div class="style-opt" data-style="HYBRID"><div class="style-swatch" style="background:linear-gradient(135deg,#1a2a14,#3a5a8a)"></div><span>Hybrid</span></div>
+      <div class="style-opt" data-style="TOPO"><div class="style-swatch" style="background:linear-gradient(135deg,#c8a870,#a07840)"></div><span>Topo</span></div>
+      <div class="style-opt" data-style="TOPO.SHINY"><div class="style-swatch" style="background:linear-gradient(135deg,#f3e7b0,#7ec86a)"></div><span>Topo Shiny</span></div>
+      <div class="style-opt active" data-style="TOPO.GREY"><div class="style-swatch" style="background:linear-gradient(135deg,#cfcfcf 40%,#f7f7f7 40%,#f7f7f7 52%,#2a2a2a 52%,#2a2a2a 60%,#9a9a9a 60%)"></div><span>Topo Grey</span></div>
+      <div class="style-opt" data-style="WINTER"><div class="style-swatch" style="background:linear-gradient(135deg,#d8eaf8,#f0f6fc)"></div><span>Winter</span></div>
+      <div class="style-opt" data-style="DARK"><div class="style-swatch" style="background:linear-gradient(135deg,#1a1a2e,#2a2a3e)"></div><span>Dark</span></div>
+      <div class="style-opt" data-style="BRIGHT"><div class="style-swatch" style="background:linear-gradient(135deg,#f0e8d0,#e8dcc0)"></div><span>Bright</span></div>
+      <div class="style-opt" data-style="OCEAN"><div class="style-swatch" style="background:linear-gradient(135deg,#1a4a7a,#2a6aaa)"></div><span>Ocean</span></div>
+    </div>
+
+    <!-- Controls visibility toggle -->
+    <button id="ctrl-toggle" type="button" title="Toggle map controls">
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </button>
+
+    <!-- A5 format toggle -->
+    <button id="btn-a5" type="button" title="Formato A5">
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="2" width="16" height="20" rx="2"/>
+        <line x1="8" y1="7" x2="16" y2="7"/>
+        <line x1="8" y1="11" x2="16" y2="11"/>
+        <line x1="8" y1="15" x2="13" y2="15"/>
+      </svg>
+    </button>
+
+    <!-- Screenshot -->
+    <button id="btn-screenshot" type="button" title="Guardar imagem do mapa (300 dpi)">
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+    </button>
+
+    <!-- Drop overlay (shown while file is being dragged over the window) -->
+    <div id="drop-overlay">
+      <svg aria-hidden="true" focusable="false" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="16" width="56" height="44" rx="4" stroke="#e94560" stroke-width="3"/>
+        <path d="M36 52V28M36 28L26 38M36 28L46 38" stroke="#e94560" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M22 16V12C22 10.343 23.343 9 25 9H47C48.657 9 50 10.343 50 12V16" stroke="#e94560" stroke-width="3"/>
+      </svg>
+      <p>DROP .RN2 OR .RBC FILE</p>
+    </div>
+
+    <!-- Empty-state hint -->
+    <div id="hint">
+      <span class="hint-icon">📂</span>
+      <p>Drag &amp; drop a <strong>.rn2</strong> or <strong>.rbc</strong> file anywhere on the map</p>
+      <p style="font-size:0.8rem;opacity:0.5">Coordinates between &lt;dss/&gt; and &lt;ass/&gt; will be extracted</p>
+    </div>
+
+    <!-- Legend (hidden until a track is loaded) -->
+    <div class="legend" id="legend" hidden>
+      <h3>Legenda</h3>
+      <div class="legend-grid">
+        <div class="legend-item" data-legend="tc" hidden>
+          <img src="images/TC.png" alt="" />
+          <span>TC</span>
+        </div>
+        <div class="legend-item" data-legend="dss" hidden>
+          <img src="images/DSS.svg" alt="" />
+          <span>PEC Start</span>
+        </div>
+        <div class="legend-item" data-legend="ass" hidden>
+          <img src="images/ASS.svg" alt="" />
+          <span>PEC Finish</span>
+        </div>
+        <div class="legend-item" data-legend="stop" hidden>
+          <img src="images/STOP.svg" alt="" />
+          <span>STOP</span>
+        </div>
+        <div class="legend-item" data-legend="radio" hidden>
+          <img src="images/RADIO.svg" alt="" />
+          <span>Rádio</span>
+        </div>
+        <div class="legend-item" data-legend="ap-start" hidden>
+          <img src="images/tyre-warming.svg" alt="" />
+          <span>Inicio AP</span>
+        </div>
+        <div class="legend-item" data-legend="ap-end" hidden>
+          <img src="images/tyre-warming-end.svg" alt="" />
+          <span>Fim AP</span>
+        </div>
+        <div class="legend-item" data-legend="ambulance" hidden>
+          <img src="images/ambulance-pt.png" alt="" />
+          <span>Ambulância</span>
+        </div>
+        <div class="legend-item" data-legend="exit" hidden>
+          <img src="images/exit-pt.png" alt="" />
+          <span>Saída</span>
+        </div>
+        <div class="legend-item" data-legend="fire" hidden>
+          <img src="images/fire-pt.png" alt="" />
+          <span>Bombeiros</span>
+        </div>
+        <div class="legend-item" data-legend="medical" hidden>
+          <img src="images/medical-pt.png" alt="" />
+          <span>Médico</span>
+        </div>
+        <div class="legend-item" data-legend="trailer" hidden>
+          <img src="images/trailer-pt.png" alt="" />
+          <span>Reboque</span>
+        </div>
+        <div class="legend-item" data-legend="pe" hidden>
+          <div class="legend-line"></div>
+          <span>PEC</span>
+        </div>
+        <div class="legend-item" data-legend="liaison-pre" hidden>
+          <div class="legend-line" style="background:#1a7a1a"></div>
+          <span>Ligação</span>
+        </div>
+        <div class="legend-item" data-legend="liaison-post" hidden>
+          <div class="legend-line" style="background:#f97316"></div>
+          <span>Ligação</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom scale ruler -->
+    <div class="scale-wrapper" id="scale-wrapper">
+      <div class="scale-ruler">
+        <svg class="scale-ruler-svg" viewBox="0 22 100 26" width="150" height="26" title="Scale ruler">
+          <!-- Left tick -->
+          <line x1="5" y1="25" x2="5" y2="45" stroke="#eee" stroke-width="2"/>
+          <!-- Right tick -->
+          <line x1="95" y1="25" x2="95" y2="45" stroke="#eee" stroke-width="2"/>
+          <!-- Middle tick -->
+          <line x1="50" y1="30" x2="50" y2="40" stroke="#eee" stroke-width="1"/>
+          <!-- Main line -->
+          <line x1="5" y1="35" x2="95" y2="35" stroke="#eee" stroke-width="2"/>
+        </svg>
+        <div class="scale-ruler-text" id="scale-ruler-text">1 km</div>
+      </div>
+    </div>
+
+    <!-- Error toast -->
+    <div id="toast"></div>
+  </div>
+
+  <script src="https://cdn.maptiler.com/maptiler-sdk-js/latest/maptiler-sdk.umd.min.js"></script>
+  <script src="app.js?v=34"></script>
+
+</body>
+</html>
